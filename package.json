@@ -1,0 +1,24 @@
+{
+  "name": "asexor_js_client",
+  "version": "0.1.0",
+  "description": "Javascript client for ASEXOR",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "babel src -d lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/izderadicka/asexor_js_client.git"
+  },
+  "author": "Ivan Zderadicka",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/izderadicka/asexor_js_client/issues"
+  },
+  "homepage": "https://github.com/izderadicka/asexor_js_client#readme",
+  "devDependencies": {
+    "babel-cli": "^6.23.0",
+    "babel-preset-env": "^1.1.8"
+  }
+}
