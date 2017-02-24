@@ -62,7 +62,7 @@ export class Client extends BaseClient {
 
     processMessage(msg) {
         console.log('Message: ' + msg);
-        let data = JSON.parse(msg)
+        let data = JSON.parse(msg);
         let resolveCall = (action, value) => {
             let callData = this._pendingCalls.get(data.call_id);
             if (callData) {
@@ -71,7 +71,7 @@ export class Client extends BaseClient {
             } else {
                 console.error(`Unmached call_id: ${call_id}`)
             }
-        }
+        };
         switch (data.t) {
             case 'r':
                 resolveCall('resolve', data.returned);
@@ -80,16 +80,16 @@ export class Client extends BaseClient {
                 resolveCall('reject', new RemoteError(data.error, data.error_stack_trace));
                 break;
             case 'm':
-                let data = data.data;
-                if (!data) {
+                let payload = data.data;
+                if (!payload) {
                     console.error('Invalid update message - data missing');
                 } else {
-                    let taskId = data.task_id;
+                    let taskId = payload.task_id;
                     if (!taskId) {
                         console.error('Invalid update message - task_id missing');
                     } else {
-                        delete data.task_id;
-                        this.updateListeners(taskId, data);
+                        delete payload.task_id;
+                        this.updateListeners(taskId, payload);
                     }
                 }
         }
