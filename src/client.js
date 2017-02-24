@@ -61,7 +61,7 @@ export class Client extends BaseClient {
     }
 
     processMessage(msg) {
-        console.log('Message: ' + msg);
+        //console.log('Message: ' + msg);
         let data = JSON.parse(msg);
         let resolveCall = (action, value) => {
             let callData = this._pendingCalls.get(data.call_id);
