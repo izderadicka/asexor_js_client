@@ -1,21 +1,12 @@
-class RemoteError extends Error {
-    constructor(message, remoteStackTrace) {
-        super(message);
-        this.remoteStackTrace = remoteStackTrace;
-    }
+import {BaseClient, RemoteError} from './base-client';
 
-    toString() {
-        return `Remote Error: ${this.message}\n${this.remoteStackTrace}`;
-    }
-};
-
-export class Client {
+export class Client extends BaseClient {
 
     constructor(host, token) {
+        super();
         this.hostName = host;
         this.securityToken = token;
         this.ws = null;
-        this.listeners = new Set();
         this.wasError = false;
         this.reconnectDelay = 1000;
         this._call_id = 1;
@@ -31,18 +22,6 @@ export class Client {
         return this.ws && this.ws.readyState === WebSocket.OPEN;
     }
 
-    subscribe(handler) {
-        this.listeners.add(handler);
-    }
-
-    unsubscribe(handler) {
-        this.listeners.delete(handler);
-    }
-
-    unsubscribeAll() {
-        this.listeners.clear();
-    }
-
     _reconnect() {
         if (this.ws)
             window.setTimeout(() => this.connect(), this.reconnectDelay);
@@ -51,29 +30,34 @@ export class Client {
     connect() {
         this.wasError = false;
         this.ws = new WebSocket(`ws://${this.hostName}/ws?token=${this.securityToken}`);
-        this.ws.onerror = (evt) => {
-            console.error(`WebSocket error `);
-            //reconnect
-            this.wasError = true;
-            this._reconnect();
-        };
+
         return new Promise((resolve, reject) => {
+
+            this.ws.onerror = (evt) => {
+                console.error(`WebSocket error `);
+                //reconnect
+                this.wasError = true;
+                this._reconnect();
+            };
+
             this.ws.onopen = () => {
 
                 this.ws.onopen = null;
                 this.ws.onmessage = (evt) => this.processMessage(evt.data);
                 this.ws.onclose = (evt) => {
                     console.log(`Websocket closed - clean ${evt.wasClean}, code ${evt.code}`);
-                    document.dispatchEvent(new Event('ws-client-close'));
+                    document.dispatchEvent(new Event('asexor-client-close'));
                     if (evt.code !== 1000 && !this.wasError) {
                         this._reconnect()
+                    } else {
+                        reject(new Error(`WS connection problem (code ${evt.code})`));
                     }
                 }
                 console.log('WS connected');
                 resolve();
-                document.dispatchEvent(new Event('ws-client-open'));
-            }
-        })
+                document.dispatchEvent(new Event('asexor-client-open'));
+            };
+        });
     }
 
     processMessage(msg) {
@@ -96,16 +80,29 @@ export class Client {
                 resolveCall('reject', new RemoteError(data.error, data.error_stack_trace));
                 break;
             case 'm':
-                this.listeners.forEach((handler) => handler(data.data));
+                let data = data.data;
+                if (!data) {
+                    console.error('Invalid update message - data missing');
+                } else {
+                    let taskId = data.task_id;
+                    if (!taskId) {
+                        console.error('Invalid update message - task_id missing');
+                    } else {
+                        delete data.task_id;
+                        this.updateListeners(taskId, data);
+                    }
+                }
         }
     }
 
-    exec(args, kwargs) {
+    exec(task_name, args, kwargs) {
         if (this.ws.readyState !== WebSocket.OPEN) {
             throw new Error('WebSocket not ready');
         }
+
+        let allArgs = [task_name].concat(args);
         let call_id = this.next_call_id;
-        this.ws.send(JSON.stringify({call_id, args, kwargs}));
+        this.ws.send(JSON.stringify({call_id, args: allArgs, kwargs}));
         return new Promise((resolve, reject) => {
             this._pendingCalls.set(call_id, {resolve, reject, ts: new Date()})
         })
