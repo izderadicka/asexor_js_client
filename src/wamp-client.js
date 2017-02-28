@@ -59,7 +59,12 @@ export class Client extends BaseClient {
     exec(task_name, args, kwargs) {
         if (!this.active)
             throw new Error('WAMP session is not active');
-        return this.session.call(WAMP_REMOTE_PROCEDURE, [task_name].concat(args), kwargs)
+        try {
+          return this.session.call(WAMP_REMOTE_PROCEDURE, [task_name].concat(args), kwargs)
+        }
+        catch (err) {
+          return Promise.reject(err);
+        }
     }
 
     close() {

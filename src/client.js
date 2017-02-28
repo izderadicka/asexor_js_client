@@ -63,24 +63,24 @@ export class Client extends BaseClient {
     processMessage(msg) {
         //console.log('Message: ' + msg);
         let data = JSON.parse(msg);
+        let [msg_type,call_id, payload, extra] = data;
         let resolveCall = (action, value) => {
-            let callData = this._pendingCalls.get(data.call_id);
+            let callData = this._pendingCalls.get(call_id);
             if (callData) {
-                this._pendingCalls.delete(data.call_id);
+                this._pendingCalls.delete(call_id);
                 callData[action](value);
             } else {
                 console.error(`Unmached call_id: ${call_id}`)
             }
         };
-        switch (data.t) {
+        switch (msg_type) {
             case 'r':
-                resolveCall('resolve', data.returned);
+                resolveCall('resolve', payload);
                 break;
             case 'e':
-                resolveCall('reject', new RemoteError(data.error, data.error_stack_trace));
+                resolveCall('reject', new RemoteError(payload, extra));
                 break;
             case 'm':
-                let payload = data.data;
                 if (!payload) {
                     console.error('Invalid update message - data missing');
                 } else {
@@ -100,9 +100,9 @@ export class Client extends BaseClient {
             throw new Error('WebSocket not ready');
         }
 
-        let allArgs = [task_name].concat(args);
+
         let call_id = this.next_call_id;
-        this.ws.send(JSON.stringify({call_id, args: allArgs, kwargs}));
+        this.ws.send(JSON.stringify([call_id, task_name, {args, kwargs}]));
         return new Promise((resolve, reject) => {
             this._pendingCalls.set(call_id, {resolve, reject, ts: new Date()})
         })
