@@ -1,5 +1,7 @@
 import {BaseClient, RemoteError} from './base-client';
 
+const CALL_TIMEOUT = 10000; // timeout for exec to return task_id or fail
+
 export class Client extends BaseClient {
 
     constructor(host, token) {
@@ -9,13 +11,8 @@ export class Client extends BaseClient {
         this.ws = null;
         this.wasError = false;
         this.reconnectDelay = 1000;
-        this._call_id = 1;
         this._pendingCalls = new Map();
 
-    }
-
-    get next_call_id() {
-        return this._call_id++;
     }
 
     get active() {
@@ -68,6 +65,7 @@ export class Client extends BaseClient {
             let callData = this._pendingCalls.get(call_id);
             if (callData) {
                 this._pendingCalls.delete(call_id);
+                window.clearTimeout(callData.to);
                 callData[action](value);
             } else {
                 console.error(`Unmached call_id: ${call_id}`)
@@ -104,7 +102,8 @@ export class Client extends BaseClient {
         let call_id = this.next_call_id;
         this.ws.send(JSON.stringify([call_id, task_name, {args, kwargs}]));
         return new Promise((resolve, reject) => {
-            this._pendingCalls.set(call_id, {resolve, reject, ts: new Date()})
+            let to = window.setTimeout(reject, CALL_TIMEOUT, new Error('Call timeout'));
+            this._pendingCalls.set(call_id, {resolve, reject, ts: new Date(), to});
         })
     }
 

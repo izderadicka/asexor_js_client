@@ -19,8 +19,13 @@ export class BaseClient {
     if (new.target === BaseClient)
       throw new TypeError('Cannot instantiate abstract class');
     this.listeners = new Set();
+    this._call_id = 1;
   }
 
+  get next_call_id() {
+      return this._call_id++;
+  }
+  
   subscribe(handler) {
       this.listeners.add(handler);
   }
