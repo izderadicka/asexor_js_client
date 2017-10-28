@@ -26,7 +26,7 @@ export class Client extends BaseClient {
 
     connect() {
         this.wasError = false;
-        this.ws = new WebSocket(`ws://${this.hostName}/ws?token=${this.securityToken}`);
+        this.ws = new WebSocket(`${location.protocol ==='https:'?'wss:':'ws:'}//${this.hostName}/ws?token=${this.securityToken}`);
 
         return new Promise((resolve, reject) => {
 
