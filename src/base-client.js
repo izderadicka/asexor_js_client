@@ -16,8 +16,9 @@ export class RemoteError extends Error {
 
 export class BaseClient {
   constructor() {
-    if (new.target === BaseClient)
-      throw new TypeError('Cannot instantiate abstract class');
+    // new target is not well supported by tools yet
+    // if (new.target === BaseClient)
+    //   throw new TypeError('Cannot instantiate abstract class');
     this.listeners = new Set();
     this._call_id = 1;
   }
