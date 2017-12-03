@@ -1,6 +1,6 @@
 {
   "name": "asexor_js_client",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Javascript client for ASEXOR",
   "main": "lib/index.js",
   "scripts": {

@@ -4,10 +4,11 @@ const CALL_TIMEOUT = 10000; // timeout for exec to return task_id or fail
 
 export class Client extends BaseClient {
 
-    constructor(host, token) {
+    constructor(host, token, sessionId) {
         super();
         this.hostName = host;
         this.securityToken = token;
+        this.sessionId = sessionId;
         this.ws = null;
         this.wasError = false;
         this.reconnectDelay = 1000;
@@ -26,7 +27,11 @@ export class Client extends BaseClient {
 
     connect() {
         this.wasError = false;
-        this.ws = new WebSocket(`${location.protocol ==='https:'?'wss:':'ws:'}//${this.hostName}/ws?token=${this.securityToken}`);
+        let url = `${location.protocol ==='https:'?'wss:':'ws:'}//${this.hostName}/ws?token=${this.securityToken}`;
+        if (this.sessionId) {
+            url+= `&session_id=${this.sessionId}`;
+        }
+        this.ws = new WebSocket(url);
 
         return new Promise((resolve, reject) => {
 
