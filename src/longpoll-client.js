@@ -31,8 +31,10 @@ export class Client extends BaseClient {
             fetch(this.url, {'credentials': 'include'})
             .then(checkResponse)
             .then(data=>{
+              if (this._connected) {
               this.processUpdates(data);
               window.setTimeout(poll, 0);
+              }
               })
             .catch(err=> {
               console.error(`Long poll error ${err}`);
@@ -85,6 +87,7 @@ export class Client extends BaseClient {
 
   close() {
     this._connected = false;
+    document.dispatchEvent(new Event('asexor-client-close'));
   }
 
   get active() {
