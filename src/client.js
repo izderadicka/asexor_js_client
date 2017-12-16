@@ -13,6 +13,7 @@ export class Client extends BaseClient {
         this.wasError = false;
         this.reconnectDelay = 1000;
         this._pendingCalls = new Map();
+        this._retryTimeout = null;
 
     }
 
@@ -22,7 +23,7 @@ export class Client extends BaseClient {
 
     _reconnect() {
         if (this.ws)
-            window.setTimeout(() => this.connect(), this.reconnectDelay);
+            this._retryTimeout = window.setTimeout(() => this.connect(), this.reconnectDelay);
         }
 
     connect() {
@@ -113,6 +114,10 @@ export class Client extends BaseClient {
     }
 
     close() {
+        if (this._retryTimeout) {
+            window.clearTimeout(this._retryTimeout);
+            this._retryTimeout = null;
+        }
         let ws = this.ws;
         this.ws = null;
         ws.close();
